@@ -188,6 +188,10 @@ class Prism_Kitsu_Functions(object):
         origin.ignorePostSync = QCheckBox("Ignore post sync checks")
         origin.ignorePostSync.setChecked(False)
         origin.horizontalLayout.addWidget(origin.ignorePostSync)
+        origin.setFirstFrameOne = QCheckBox(
+            "Set first frame to 1 (if only frames is set)")
+        origin.setFirstFrameOne.setChecked(False)
+        origin.horizontalLayout.addWidget(origin.setFirstFrameOne)
 
         lo_ksu2.addLayout(origin.horizontalLayout)
 
@@ -249,6 +253,10 @@ class Prism_Kitsu_Functions(object):
                 origin.ignorePostSync.setChecked(
                     settings["kitsu"]["ignorepostchecks"])
 
+            if "setfirstframeone" in settings["kitsu"]:
+                origin.ignorePostSync.setChecked(
+                    settings["kitsu"]["setfirstframeone"])
+
         self.prismSettings_ksuToggled(origin,
                                       origin.gb_ksuIntegration.isChecked())
 
@@ -273,6 +281,7 @@ class Prism_Kitsu_Functions(object):
         settings["kitsu"]["projectname"] = origin.e_ksuPrjName.text()
         settings["kitsu"]["usersync"] = origin.chb_syncUserTasks.isChecked()
         settings["kitsu"]["ignorepostchecks"] = origin.ignorePostSync.isChecked()
+        settings["kitsu"]["setfirstframeone"] = origin.setFirstFrameOne.isChecked()
 
     # Toggle visibility of toggle-objects
     @ err_catcher(name=__name__)
@@ -882,46 +891,55 @@ class Prism_Kitsu_Functions(object):
 
                 shotInfo["objID"] = shotData["id"]
 
-            # Process frameranges ##
-            startFrame = None
-            endFrame = None
-
             # As Kitsu allows you to write only one of the start frame and
             # end frame we need to check them induvidually
-            if shotData["data"] is not None and "frame_in" in shotData["data"]:
-                startFrame = int(shotData["data"]["frame_in"])
-                if "frame_out" in shotData["data"]:
-                    endFrame = int(shotData["data"]["frame_out"])
-                else:
-                    endFrame = int(startFrame) + 100
+            frame_nudge = int(self.core.getConfig("kitsu",
+                                                  "setFirstFrameOne",
+                                                  configPath=self.core.prismIni) is True)
+            nb_frames = None
+            if shotData["nb_frames"] is not None:
+                nb_frames = int(shotData["nb_frames"])
+            frame_in = None
+            if "frame_in" in shotData["data"]:
+                frame_in = int(shotData["data"]["frame_in"])
+            frame_out = None
+            if "frame_out" in shotData["data"]:
+                frame_out = int(shotData["data"]["frame_out"])
 
-            if startFrame is not None and endFrame is not None:
+            if frame_in is not None:
+                if frame_out is None:
+                    frame_out = frame_in + nb_frames
+            elif nb_frames is not None:
+                frame_in = frame_nudge
+                frame_out = nb_frames - 1 + frame_nudge
+
+            if frame_in is not None and frame_out is not None:
                 shotRange = self.core.getConfig("shotRanges",
                                                 shotName,
                                                 config="shotinfo")
 
-                prvStartFrame = None
-                prvEndFrame = None
+                prv_frame_in = None
+                prv_frame_out = None
 
                 if (isinstance(shotRange, (list, yaml.comments.CommentedSeq))
                         and len(shotRange) == 2):
-                    prvStartFrame = int(shotRange[0])
-                    prvEndFrame = int(shotRange[1])
+                    prv_frame_in = int(shotRange[0])
+                    prv_frame_out = int(shotRange[1])
 
-                if (startFrame != prvStartFrame or endFrame != prvEndFrame):
+                if (frame_in != prv_frame_in or frame_out != prv_frame_out):
                     # Update to be connected to shot-name instead of shotRange
                     self.core.setConfig(
                         "shotRanges",
                         shotName,
-                        [startFrame, endFrame],
+                        [frame_in, frame_out],
                         config="shotinfo"
                     )
 
                 if (
                     shotName not in createdShots
                     and shotName not in updatedShots
-                    and (startFrame != prvStartFrame
-                         or endFrame != prvEndFrame)
+                    and (frame_in != prv_frame_in
+                         or frame_out != prv_frame_out)
                 ):
                     updatedShots.append(shotName)
 
