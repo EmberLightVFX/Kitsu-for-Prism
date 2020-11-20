@@ -160,7 +160,7 @@ def GetKitsuShots(self):
 def GetKitsuAssets(self):
     connected = self.connectToKitsu()
     if connected is False:
-        return False, False
+        return False
 
     assetTypes = GetAssetTypes()
     ksuAssets = []
@@ -175,7 +175,7 @@ def GetKitsuAssets(self):
         for asset in assets:
             ksuAssets.append(asset)
     if len(ksuAssets) == 0:
-        return False, False
+        return False
 
     ksuAssets = RemoveCanceled(ksuAssets)
 
