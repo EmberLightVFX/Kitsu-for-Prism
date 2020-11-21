@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>216</width>
-    <height>119</height>
+    <width>218</width>
+    <height>143</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,6 +35,29 @@
    </item>
    <item>
     <widget class="QComboBox" name="task_Box"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Set status to:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="status_Box"/>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="cb_preview">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Set image as preview</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item>
     <spacer name="verticalSpacer">

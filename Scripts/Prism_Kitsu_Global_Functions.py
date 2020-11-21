@@ -171,18 +171,20 @@ def GetKitsuAssets(self):
                                     configPath=self.core.prismIni)
     for assetType in assetTypes:
         assets = GetAssets(self.project_dict, assetType, user=user_sync)
-
         for asset in assets:
             ksuAssets.append(asset)
     if len(ksuAssets) == 0:
         return False
-
     ksuAssets = RemoveCanceled(ksuAssets)
 
     return ksuAssets
 
 
-def getPublishTypeDict(self, pType):
+def getPublishTypeDict(self, pType, doStatus=False):
+    """
+    Get task types
+    Get task statses
+    """
     taskTypes_dict = getTaskTypes()
 
     taskTypes = []
@@ -190,8 +192,12 @@ def getPublishTypeDict(self, pType):
         if taskType["for_shots"] == (pType == "Shot"):
             taskTypes.append(taskType)
 
+    taskStatuses = gazu.task.all_task_statuses()
+
     tp = TaskPicker.TaskPicker(core=self.core,
-                               taskTypes_dicts=taskTypes)
+                               doStatus=doStatus,
+                               taskTypes_dicts=taskTypes,
+                               taskStatuses_dicts=taskStatuses)
     tp.exec_()
 
     if tp.picked_data is None:

@@ -329,11 +329,11 @@ def createKitsuAsset(project_dict,
 
 
 def uploadThumbnail(entity_id, thumbnail_URL, task_type_dict, user_Email):
-    preview_dict = uploadRevision(entity_id,
-                                  thumbnail_URL,
-                                  task_type_dict,
-                                  user_Email)
-    gazu.task.set_main_preview(preview_dict)
+    uploadRevision(entity_id,
+                   thumbnail_URL,
+                   task_type_dict,
+                   user_Email,
+                   True)
     entity_dict = gazu.entity.get_entity(entity_id)
     return entity_dict["preview_file_id"]
 
@@ -341,7 +341,9 @@ def uploadThumbnail(entity_id, thumbnail_URL, task_type_dict, user_Email):
 def uploadRevision(entity_id,
                    thumbnail_URL,
                    task_type_dict,
+                   type_status_dict,
                    user_Email,
+                   set_preview,
                    comment=""):
 
     entity_dict = gazu.entity.get_entity(entity_id)
@@ -350,15 +352,20 @@ def uploadRevision(entity_id,
     if task_dict is None:
         task_dict = gazu.task.new_task(entity_dict, task_type_dict)
 
-    task_status = gazu.task.get_task_status(task_dict)
+    if type_status_dict is None:
+        type_status_dict = gazu.task.get_task_status(task_dict)
+
     comment_dict = addComment(task_dict,
-                              task_status,
+                              type_status_dict,
                               comment=comment,
                               person=person_dict)
 
     preview_dict = gazu.task.add_preview(task_dict,
                                          comment_dict,
                                          thumbnail_URL)
+
+    if set_preview is True:
+        gazu.task.set_main_preview(preview_dict)
 
     return preview_dict
 

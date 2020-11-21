@@ -13,40 +13,57 @@ from PrismUtils.Decorators import err_catcher
 
 
 class TaskPicker(QDialog, TaskPicker_ui.Ui_dlg_PickTask):
-    def __init__(self, core, taskTypes_dicts):
+    def __init__(self, core, taskTypes_dicts, taskStatuses_dicts, doStatus):
         QDialog.__init__(self)
         self.setupUi(self)
 
         self.core = core
-        self.populateTasks(taskTypes_dicts)
+        self.populateTasks(taskTypes_dicts, taskStatuses_dicts)
+        self.status_Box
         self.picked_data = None
-
+        self.doStatus = doStatus
+        if self.doStatus is False:
+            self.status_Box.setVisible(False)
+            self.cb_preview.setVisible(False)
         # self.loadData()
         self.connectEvents()
 
     @err_catcher(name=__name__)
-    def populateTasks(self, taskTypes_dicts):
-        for typeTask in taskTypes_dicts:
-            self.task_Box.addItem(str(typeTask["name"]),
-                                  typeTask)
+    def populateTasks(self, taskTypes_dicts, taskStatuses_dicts):
+        for taskType in taskTypes_dicts:
+            self.task_Box.addItem(str(taskType["name"]),
+                                  taskType)
 
-    @err_catcher(name=__name__)
+        self.status_Box.addItem("[Keep as current]", None)
+        for taskStatus in taskStatuses_dicts:
+            self.status_Box.addItem(str(taskStatus["name"]), taskStatus)
+
+    @ err_catcher(name=__name__)
     def connectEvents(self):
         self.btn_publish.clicked.connect(self.publish)
         self.btn_cancel.clicked.connect(self.cancel)
 
-    @err_catcher(name=__name__)
+    @ err_catcher(name=__name__)
     def publish(self):
-        self.picked_data = self.task_Box.itemData(
-            self.task_Box.currentIndex())
+        if self.doStatus is True:
+            self.picked_data = [
+                self.task_Box.itemData(self.task_Box.currentIndex()),
+                self.status_Box.itemData(self.status_Box.currentIndex()),
+                self.cb_preview.isChecked()
+            ]
+        else:
+            self.task_Box.itemData(self.task_Box.currentIndex())
         self.accept()
 
-    @err_catcher(name=__name__)
+    @ err_catcher(name=__name__)
     def cancel(self):
-        self.picked_data = None
+        if self.doStatus is True:
+            self.picked_data = [None, None, None]
+        else:
+            self.picked_data = None
         self.reject()
 
-    @err_catcher(name=__name__)
+    @ err_catcher(name=__name__)
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
             self.publish()
