@@ -9,6 +9,7 @@ To install:
 - Rename the folder to just Kitsu
 - Place the folder in your Prism installation folder -> Plugins -> ProjectManagers
 - Restart Prism.
+
 Your folder path should look like this: Prism/Plugins/ProjectManagers/Kitsu/Scripts and external_modules folder
 If it doesn't the plugin won't load.
 
