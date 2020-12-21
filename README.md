@@ -3,6 +3,16 @@ This plugin lets you sync between Prism-Pipeline and cgwire\'s Kitsu.
 Download this repo, rename the folder to Kitsu and place it under your Prism folder/Plugins/ProjectManagers
 Restart Prism and any open DCC apps.
 
+To install:
+- Download the code in the top right corner
+- Unzip the zip file
+- Rename the folder to just Kitsu
+- Place the folder in your Prism installation folder -> Plugins -> ProjectManagers
+- Restart Prism.
+
+Your folder path should look like this: **Prism/Plugins/ProjectManagers/Kitsu/Scripts and external_modules** folder
+If it doesn't the plugin won't load.
+
 Features:
 - Sync shots and assets between Kitsu and Prism including frame range, descriptions and thumbnails
 - Sync everything or only assigned shots and assets
