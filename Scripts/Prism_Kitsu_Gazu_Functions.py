@@ -183,7 +183,8 @@ def DownloadThumbnail(self, name, preview_file_id, folder_name):
             "%s_preview" % name,
         )
         if preview_file_id is None:  # Thumbnail removed
-            os.remove(previewImgPath + ".jpg")
+            if os.path.isfile(previewImgPath + ".jpg"):
+                os.remove(previewImgPath + ".jpg")
             return "", False, True  # File updated
 
         else:  # Thumbnail added or changed

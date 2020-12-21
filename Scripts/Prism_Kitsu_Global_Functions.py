@@ -115,7 +115,7 @@ def RemoveCanceled(entities):
 def GetKitsuShots(self):
     connected = self.connectToKitsu()
     if connected is False:
-        return False, False, False
+        return False
 
     ksuShots = []
 
@@ -123,6 +123,7 @@ def GetKitsuShots(self):
     user_sync = self.core.getConfig("kitsu",
                                     "usersync",
                                     configPath=self.core.prismIni)
+
 
     # Check if tv show, meaning we're also dealing with episodes
     if self.project_dict["production_type"] == "tvshow":
@@ -149,7 +150,7 @@ def GetKitsuShots(self):
                 ksuShots.append(shot)
 
     if len(ksuShots) == 0:
-        return False, False, False
+        return False
 
     ksuShots = RemoveCanceled(ksuShots)
 
