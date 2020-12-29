@@ -82,6 +82,7 @@ import add_external_folders
 
 import os
 import tempfile
+import shutil
 import ruamel.yaml as yaml
 
 try:
@@ -525,8 +526,8 @@ class Prism_Kitsu_Functions(object):
         # Convert to mp4
         temp_folder = None
         if mediaPlayback["prvIsSequence"]:
-            temp_folder = tempfile.TemporaryDirectory()
-            outputpath = self.convertSeqToVideo(origin, temp_folder.name)
+            temp_folder = tempfile.mkdtemp()
+            outputpath = self.convertSeqToVideo(origin, temp_folder)
             videoPaths.append(outputpath)
         else:
             for i in mediaPlayback["seq"]:
@@ -553,7 +554,7 @@ class Prism_Kitsu_Functions(object):
 
         # Clean up potential temp_folder
         if temp_folder is not None:
-            temp_folder.cleanup()
+            shutil.rmtree(temp_folder)
 
         QMessageBox.information(
             self.core.messageParent,
