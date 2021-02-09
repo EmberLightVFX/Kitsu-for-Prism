@@ -206,5 +206,6 @@ def getPublishTypeDict(self, pType, doStatus=False):
             "Kitsu Publish",
             "Publishing canceled"
         )
+        return [None, None, None, None]
 
     return tp.picked_data

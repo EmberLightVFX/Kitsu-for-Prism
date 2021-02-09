@@ -336,6 +336,7 @@ def uploadThumbnail(entity_id, thumbnail_URL, task_type_dict, user_Email):
     uploadRevision(entity_id,
                    thumbnail_URL,
                    task_type_dict,
+                   None,
                    user_Email,
                    True)
     entity_dict = gazu.entity.get_entity(entity_id)
