@@ -49,7 +49,8 @@ class TaskPicker(QDialog, TaskPicker_ui.Ui_dlg_PickTask):
             self.picked_data = [
                 self.task_Box.itemData(self.task_Box.currentIndex()),
                 self.status_Box.itemData(self.status_Box.currentIndex()),
-                self.cb_preview.isChecked()
+                self.cb_preview.isChecked(),
+                self.comment_Text.toPlainText()
             ]
         else:
             self.task_Box.itemData(self.task_Box.currentIndex())
@@ -58,7 +59,7 @@ class TaskPicker(QDialog, TaskPicker_ui.Ui_dlg_PickTask):
     @ err_catcher(name=__name__)
     def cancel(self):
         if self.doStatus is True:
-            self.picked_data = [None, None, None]
+            self.picked_data = [None, None, None, None]
         else:
             self.picked_data = None
         self.reject()

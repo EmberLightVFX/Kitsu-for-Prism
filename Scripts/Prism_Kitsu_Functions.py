@@ -503,9 +503,9 @@ class Prism_Kitsu_Functions(object):
             pType = "Shot"
 
         # Get task type dict
-        self.publish_type_dict, type_status_dict, set_preview = getPublishTypeDict(self,
-                                                                                   pType,
-                                                                                   doStatus=True)
+        self.publish_type_dict, type_status_dict, set_preview, comment_text = getPublishTypeDict(self,
+                                                                                                 pType,
+                                                                                                 doStatus=True)
         if self.publish_type_dict is None:
             return
 
@@ -549,7 +549,7 @@ class Prism_Kitsu_Functions(object):
                 type_status_dict,
                 user_email,
                 set_preview,
-                comment=taskName + " " + versionName
+                comment=taskName + " " + versionName + " - " + comment_text
             )
 
         # Clean up potential temp_folder

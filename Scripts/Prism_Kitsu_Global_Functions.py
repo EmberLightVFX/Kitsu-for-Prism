@@ -124,7 +124,6 @@ def GetKitsuShots(self):
                                     "usersync",
                                     configPath=self.core.prismIni)
 
-
     # Check if tv show, meaning we're also dealing with episodes
     if self.project_dict["production_type"] == "tvshow":
         episodes = GetEpisodes(self.project_dict, user=user_sync)
@@ -196,9 +195,9 @@ def getPublishTypeDict(self, pType, doStatus=False):
     taskStatuses = gazu.task.all_task_statuses()
 
     tp = TaskPicker.TaskPicker(core=self.core,
-                               doStatus=doStatus,
                                taskTypes_dicts=taskTypes,
-                               taskStatuses_dicts=taskStatuses)
+                               taskStatuses_dicts=taskStatuses,
+                               doStatus=doStatus)
     tp.exec_()
 
     if tp.picked_data is None:
