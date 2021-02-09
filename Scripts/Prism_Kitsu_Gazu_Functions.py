@@ -406,3 +406,13 @@ def getTaskTypes(dict=None):
         tasks = gazu.task.all_task_types()
 
     return tasks
+
+
+def doEntityExist(entity):
+    exist = False
+    try:
+        exist = True if gazu.entity.get_entity(entity) is not None else False
+    except:
+        pass
+
+    return exist

@@ -502,18 +502,34 @@ class Prism_Kitsu_Functions(object):
         else:
             pType = "Shot"
 
+        # Get ID from objectName
+        if pType == "Asset":
+            objectID = getID(self, objectName, "Assetinfo")
+        else:
+            objectID = getID(self, objectName, "Shotinfo")
+
+        if doEntityExist(objectID) is False:
+            QMessageBox.warning(
+                self.core.messageParent,
+                "Kitsu Publish",
+                "This " + pType.lower() + " does not exist on Kitsu.\nPlease sync to Kitsu before publishing."
+            )
+
+            # Remove ID that no longer exists from config file
+            if objectID is not None:
+                if pType == "Asset":
+                    removeID(self, objectName, "Assetinfo")
+                else:
+                    removeID(self, objectName, "Shotinfo")
+
+            return
+
         # Get task type dict
         self.publish_type_dict, type_status_dict, set_preview, comment_text = getPublishTypeDict(self,
                                                                                                  pType,
                                                                                                  doStatus=True)
         if self.publish_type_dict is None:
             return
-
-        # Get ID from objectName
-        if pType == "Asset":
-            objectID = getID(self, objectName, "Assetinfo")
-        else:
-            objectID = getID(self, objectName, "Shotinfo")
 
         taskName = (origin.curRTask.replace(" (playblast)", "")
                     .replace(" (2d)", "")
