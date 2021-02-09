@@ -685,7 +685,7 @@ class Prism_Kitsu_Functions(object):
             assetPath = os.path.join(assetPath, assetData["name"])
 
             # Create folder
-            if not os.path.exists(assetPath):
+            if not os.path.isdir(assetPath):
                 self.core.entities.createEntity("asset", assetPath)
                 createdAssets.append(assetData["name"])
 
@@ -774,7 +774,7 @@ class Prism_Kitsu_Functions(object):
                     noAccess = []
                     for i in localAssets:
                         dstname = os.path.join(origin.aBasePath, "_" + i)
-                        if not os.path.exists(dstname):
+                        if not os.path.isdir(dstname):
                             try:
                                 os.rename(
                                     os.path.join(
@@ -888,7 +888,7 @@ class Prism_Kitsu_Functions(object):
                 shotName = shotData["episode_name"] + "." + shotName
 
             # Create folder if it doesn't exist
-            if not os.path.exists(os.path.join(origin.sBasePath, shotName)):
+            if not os.path.isdir(os.path.join(origin.sBasePath, shotName)):
                 self.core.entities.createEntity("shot", shotName)
 
                 createdShots.append(shotName)
@@ -1019,7 +1019,7 @@ class Prism_Kitsu_Functions(object):
                     noAccess = []
                     for i in localShots:
                         dstname = os.path.join(origin.sBasePath, "_" + i)
-                        if not os.path.exists(dstname):
+                        if not os.path.isdir(dstname):
                             try:
                                 os.rename(
                                     os.path.join(
@@ -1163,7 +1163,7 @@ class Prism_Kitsu_Functions(object):
                                           "Assetinfo",
                                           "%s_preview.jpg" % asset_name,
                                           )
-            thumbnailURL = previewImgPath if os.path.exists(
+            thumbnailURL = previewImgPath if os.path.isfile(
                 previewImgPath) else None
 
             asset_type_dict, created_asset_type = createKitsuAssetType(
@@ -1250,7 +1250,7 @@ class Prism_Kitsu_Functions(object):
             else:
                 epName = None
 
-            thumbnailURL = previewImgPath if os.path.exists(
+            thumbnailURL = previewImgPath if os.path.isfile(
                 previewImgPath) else None
 
             episode_dict, created_ep = createKitsuEpisode(self.project_dict,
