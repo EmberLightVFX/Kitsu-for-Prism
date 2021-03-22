@@ -10,8 +10,8 @@ except:
     from PySide.QtGui import *
 
 
-def printText(text):
-    QMessageBox.warning(QWidget(), str("Print"), str(text))
+def printText(text, name="Print"):
+    QMessageBox.warning(QWidget(), str(name), str(text))
 
 
 def mkdir_p(path):
