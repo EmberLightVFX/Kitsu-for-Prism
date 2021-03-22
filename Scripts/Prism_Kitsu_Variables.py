@@ -33,7 +33,7 @@
 
 class Prism_Kitsu_Variables(object):
     def __init__(self, core, plugin):
-        self.version = "v1.3.0.4"
+        self.version = "v1.3.0.5"
         self.pluginName = "Kitsu"
         self.pluginType = "ProjectManager"
         self.platforms = ["Windows", "Linux", "Darwin"]

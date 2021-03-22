@@ -53,7 +53,8 @@ class TaskPicker(QDialog, TaskPicker_ui.Ui_dlg_PickTask):
                 self.comment_Text.toPlainText()
             ]
         else:
-            self.task_Box.itemData(self.task_Box.currentIndex())
+            self.picked_data = self.task_Box.itemData(
+                self.task_Box.currentIndex())
         self.accept()
 
     @ err_catcher(name=__name__)
