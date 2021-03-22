@@ -78,6 +78,7 @@ Fixes:
 
 '''
 # Add UserInterfaces and external_modules to the paths
+from Prism_Kitsu_Tools_Functions import printText
 import add_external_folders
 
 import os
@@ -1156,6 +1157,7 @@ class Prism_Kitsu_Functions(object):
             # the name of the asset
             aBasePath = self.core.getAssetPath()
             asset_location = asset_location.replace(aBasePath, "")
+
             splits = asset_location[1:].split(os.sep)[:-1]
 
             # If not in any subfolder, assign to the empty asset-type
@@ -1170,9 +1172,15 @@ class Prism_Kitsu_Functions(object):
                                                     config="assetinfo")
 
             # If asset has subfolders, add to asset_description
+
             if len(splits) > 1:
+                if asset_description is not None:
+                    asset_description = " - " + str(asset_description)
+                else:
+                    asset_description = ""
+
                 asset_description = "/".join(splits[1:]) + \
-                    " - " + asset_description
+                    " - " + str(asset_description)
 
             # Get preview image
             previewImgPath = os.path.join(os.path.dirname(self.core.prismIni),
