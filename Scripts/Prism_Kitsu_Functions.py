@@ -1180,7 +1180,7 @@ class Prism_Kitsu_Functions(object):
                     asset_description = ""
 
                 asset_description = "/".join(splits[1:]) + \
-                    " - " + str(asset_description)
+                    str(asset_description)
 
             # Get preview image
             previewImgPath = os.path.join(os.path.dirname(self.core.prismIni),
