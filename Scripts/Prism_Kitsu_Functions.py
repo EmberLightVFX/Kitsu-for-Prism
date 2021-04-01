@@ -1205,8 +1205,8 @@ class Prism_Kitsu_Functions(object):
                 while True:
                     # Get task type dict
                     if self.publish_type_dict is None:
-                        self.publish_type_dict = getPublishTypeDict(self,
-                                                                    "Asset")
+                        self.publish_type_dict = getPublishTypeDict(
+                            self, "Asset")
                         if self.publish_type_dict is None:
                             if created_asset:
                                 RemoveAsset(asset_dict)
