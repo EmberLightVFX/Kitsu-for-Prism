@@ -208,6 +208,23 @@ class Prism_Kitsu_Functions(object):
         )
         lo_ksu2.addWidget(origin.b_checkLogin)
 
+        origin.stepMappingLayout = QVBoxLayout()
+        origin.l_stepMapping = QLabel("Prism and Kitsu Step Mappings")
+        origin.l_stepMapping.setMinimumHeight(30)
+        origin.stepMappingLayout.addWidget(origin.l_stepMapping)
+        origin.tw_steps = QTableWidget()
+        origin.tw_steps.setMinimumHeight(250)
+        origin.tw_steps.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        origin.tw_steps.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        origin.tw_steps.setColumnCount(2)
+        origin.tw_steps.horizontalHeader().setHighlightSections(False)
+        origin.tw_steps.horizontalHeader().setStretchLastSection(True)
+        origin.tw_steps.verticalHeader().setVisible(False)
+        origin.tw_steps.verticalHeader().setHighlightSections(False)
+        origin.tw_steps.setHorizontalHeaderLabels(["Prism Step", "Kitsu Step"])
+        origin.stepMappingLayout.addWidget(origin.tw_steps)
+        lo_ksu2.addLayout(origin.stepMappingLayout)
+
         origin.w_prjSettings.layout().insertWidget(5, origin.gb_ksuIntegration)
         origin.groupboxes.append(origin.gb_ksuIntegration)
 
@@ -259,6 +276,22 @@ class Prism_Kitsu_Functions(object):
                 origin.ignorePostSync.setChecked(
                     settings["kitsu"]["setfirstframeone"])
 
+            if "mapping" in settings["kitsu"]:
+                stepMapping = settings["kitsu"]["mapping"]
+                for prismMap in stepMapping:
+                    rows = origin.tw_steps.rowCount()
+                    origin.tw_steps.insertRow(rows)
+                    prismStepItem = QTableWidgetItem(prismMap)
+                    origin.tw_steps.setItem(rows, 0, prismStepItem)
+                    kitsuStepItem = QTableWidgetItem(stepMapping[prismMap])
+                    origin.tw_steps.setItem(rows, 1, kitsuStepItem)
+            else:
+                self.populateMappingTable(origin)
+
+        else:
+
+            self.populateMappingTable(origin)
+
         self.prismSettings_ksuToggled(origin,
                                       origin.gb_ksuIntegration.isChecked())
 
@@ -284,6 +317,14 @@ class Prism_Kitsu_Functions(object):
         settings["kitsu"]["usersync"] = origin.chb_syncUserTasks.isChecked()
         settings["kitsu"]["ignorepostchecks"] = origin.ignorePostSync.isChecked()
         settings["kitsu"]["setfirstframeone"] = origin.setFirstFrameOne.isChecked()
+
+        stepMapping = {}
+        rows = origin.tw_steps.rowCount()
+        for i in range(rows):
+            prismMap = origin.tw_steps.item(i, 0).text()
+            kitsuMap = origin.tw_steps.item(i, 1).text()
+            stepMapping[prismMap] = kitsuMap
+        settings["kitsu"]["mapping"] = stepMapping
 
     # Toggle visibility of toggle-objects
     @ err_catcher(name=__name__)
@@ -706,6 +747,14 @@ class Prism_Kitsu_Functions(object):
                 self.core.entities.createEntity("asset", assetPath)
                 createdAssets.append(assetData["name"])
 
+            # Create steps
+            tasks = GetTasksForAsset(assetData)
+            for task in tasks:
+                kitsuStep = task["task_type_name"]
+                prismStep = self.getPrismStepFromKitsuStep(kitsuStep)
+                self.core.entities.createStep(prismStep, "asset", assetPath, createCat=False)
+                self.core.entities.createCategory("asset", assetPath, prismStep, kitsuStep)
+
             # Process thumbnail
             tmbID, created, updated = DownloadThumbnail(self,
                                                         assetData["name"],
@@ -911,6 +960,14 @@ class Prism_Kitsu_Functions(object):
                 createdShots.append(shotName)
 
                 shotInfo["objID"] = shotData["id"]
+
+            # Create steps
+            tasks = GetTasksForShot(shotData)
+            for task in tasks:
+                kitsuStep = task["task_type_name"]
+                prismStep = self.getPrismStepFromKitsuStep(kitsuStep)
+                self.core.entities.createStep(prismStep, "shot", shotName, createCat=False)
+                self.core.entities.createCategory("shot", shotName, prismStep, kitsuStep)
 
             # As Kitsu allows you to write only one of the start frame and
             # end frame we need to check them induvidually
@@ -1333,3 +1390,22 @@ class Prism_Kitsu_Functions(object):
         self.publish_type_dict = None
 
         return created_shots, updated_shots
+
+
+    def populateMappingTable(self, origin):
+        for step in self.core.getConfig(
+            "globals", "pipeline_steps", configPath=self.core.prismIni, dft={}
+        ):
+            rows = origin.tw_steps.rowCount()
+            origin.tw_steps.insertRow(rows)
+            prismStepItem = QTableWidgetItem(step)
+            origin.tw_steps.setItem(rows, 0, prismStepItem)
+
+
+    def getPrismStepFromKitsuStep(self, step):
+        for prismStep, kitsuStep in self.core.getConfig(
+            "kitsu", "mapping", configPath=self.core.prismIni, dft={}
+        ).items():
+            if step == kitsuStep:
+                return prismStep
+        return None

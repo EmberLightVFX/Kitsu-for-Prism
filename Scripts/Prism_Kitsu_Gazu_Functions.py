@@ -170,6 +170,16 @@ def GetEpisodeName(ep_id):
     return epDict
 
 
+def GetTasksForAsset(asset_dict):
+    tasks = gazu.task.all_tasks_for_asset(asset_dict)
+    return tasks
+
+
+def GetTasksForShot(shot_dict):
+    tasks = gazu.task.all_tasks_for_shot(shot_dict)
+    return tasks
+
+
 # returns created, updated
 def DownloadThumbnail(self, name, preview_file_id, folder_name):
     local_preview_id = self.core.getConfig(
