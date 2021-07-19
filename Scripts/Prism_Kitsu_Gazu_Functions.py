@@ -82,6 +82,11 @@ def GetEpisodes(project_dict, user=False):
     return episodes
 
 
+def GetEpisodeByName(project_dict, episode_name):
+    episode = gazu.shot.get_episode_by_name(project_dict, episode_name)
+    return episode
+
+
 def RemoveEpisode(episode_dict):
     return gazu.shot.remove_episode(episode_dict)
 
@@ -100,6 +105,11 @@ def GetSequences(dict, where="from_project", user=False):
             sequences = gazu.shot.all_sequences_for_episode(dict)
 
     return sequences
+
+
+def GetSequenceByName(project_dict, seq_name, episode_dict):
+    sequence = gazu.shot.get_sequence_by_name(project_dict, seq_name, episode_dict)
+    return sequence
 
 
 def RemoveSequence(sequence_dict):
@@ -126,6 +136,11 @@ def GetShots(dict, where="from_sequence", user=False, getCanceled=False):
     return shots
 
 
+def GetShotByName(sequence_dict, shot_name):
+    shot = gazu.shot.get_shot_by_name(sequence_dict, shot_name)
+    return shot
+
+
 def RemoveShot(shot_dict):
     return gazu.shot.remove_shot(shot_dict)
 
@@ -141,6 +156,11 @@ def GetAssets(proj_dict, asset_type, user=False, getCanceled=False):
             asset_type)
 
     return assets
+
+
+def GetAsset(proj_dict, asset_name):
+    asset_dict = gazu.asset.get_asset_by_name(proj_dict, asset_name)
+    return asset_dict
 
 
 def RemoveAsset(asset_dict):
@@ -340,6 +360,11 @@ def createKitsuAsset(project_dict,
         return asset_dict, True
     else:
         return asset_dict, False
+
+
+def createKitsuTask(dict, task_type):
+    task = gazu.task.new_task(dict, task_type)
+    return task
 
 
 def uploadThumbnail(entity_id, thumbnail_URL, task_type_dict, user_Email):

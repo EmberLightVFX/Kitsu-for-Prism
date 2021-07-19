@@ -889,6 +889,7 @@ class Prism_Kitsu_Functions(object):
         updatedAssets = []
         # Create the asset
         createdAssets, updatedAssets = self.createAssets(assets)
+        self.createAssetTasks(assets)
 
         # Report what shots got added or updated
         ReportUpdateInfo(self, createdAssets, updatedAssets, "assets")
@@ -1148,6 +1149,7 @@ class Prism_Kitsu_Functions(object):
                 shot_names.append(shot_name)
 
         created_shots, updated_shots = self.createShots(shot_names)
+        self.createShotTasks(shot_names)
 
         # Report what shots got added or updated
         ReportUpdateInfo(self, created_shots, updated_shots, "shots")
@@ -1170,6 +1172,10 @@ class Prism_Kitsu_Functions(object):
                     # Create shot folders ##
                     shotName = shotData["sequence_name"] + \
                         "-" + shotData["name"]
+
+                    # Add episode name if exists
+                    if "episode_name" in shotData:
+                        shotName = shotData["episode_name"] + "." + shotName
 
                     localID = getID(self, shotName, "Shotinfo")
                     if localID is None:
@@ -1302,6 +1308,42 @@ class Prism_Kitsu_Functions(object):
         return created_assets, updated_assets
 
     @ err_catcher(name=__name__)
+    def createAssetTasks(self, assets):
+        connected = self.connectToKitsu()
+        if connected is False:
+            return
+
+        for asset_location in assets:
+            # Remove pre-folder path and remove first character
+            # before os.sep split and remove last object as it's
+            # the name of the asset
+            aBasePath = self.core.getAssetPath()
+            assetPath = asset_location.replace(aBasePath, "")
+
+            splits = assetPath[1:].split(os.sep)[:-1]
+
+            # If not in any subfolder, assign to the empty asset-type
+            if len(splits) == 0:
+                splits.append("")
+
+            asset_name = os.path.basename(assetPath)
+            asset_dict = GetAsset(self.project_dict, asset_name)
+            taskTypes = getTaskTypes(asset_dict)
+            taskTypeNames = [x['name'] for x in taskTypes]
+            allTaskTypes = getTaskTypes()
+
+            scenepath = self.core.getEntityPath(entity="step", asset=assetPath)
+            for root, folders, files in os.walk(scenepath):
+                for step in folders:
+                    kitsuStep = self.getKitsuStepFromPrismStep(step)
+                    if kitsuStep not in taskTypeNames:
+                        task_type = next((x for x in allTaskTypes if x['name'] == kitsuStep), None)
+                        createKitsuTask(asset_dict, task_type)
+                break
+
+        return
+
+    @ err_catcher(name=__name__)
     def createShots(self, shots):
         connected = self.connectToKitsu()
         if connected is False:
@@ -1392,6 +1434,40 @@ class Prism_Kitsu_Functions(object):
         return created_shots, updated_shots
 
 
+    @ err_catcher(name=__name__)
+    def createShotTasks(self, shots):
+        connected = self.connectToKitsu()
+        if connected is False:
+            return
+
+        for shot_name in shots:
+            # Split names
+            shotName, seqName = self.core.entities.splitShotname(shot_name)
+            if self.project_dict["production_type"] == "tvshow":
+                seqPart = seqName
+                epName, seqName = seqName.split(".", 1)
+            else:
+                seqPart = seqName
+                epName = None
+
+            episode_dict = GetEpisodeByName(self.project_dict, epName) if epName else None
+            sequence_dict = GetSequenceByName(self.project_dict, seqName, episode_dict)
+            shot_dict = GetShotByName(sequence_dict, shotName)
+            taskTypes = getTaskTypes(shot_dict)
+            taskTypeNames = [x['name'] for x in taskTypes]
+            allTaskTypes = getTaskTypes()
+
+            scenepath = self.core.getEntityPath(entity="step", shot=shotName, sequence=seqPart)
+            for root, folders, files in os.walk(scenepath):
+                for step in folders:
+                    kitsuStep = self.getKitsuStepFromPrismStep(step)
+                    if kitsuStep not in taskTypeNames:
+                        task_type = next((x for x in allTaskTypes if x['name'] == kitsuStep), None)
+                        createKitsuTask(shot_dict, task_type)
+                break
+        return
+
+
     def populateMappingTable(self, origin):
         for step in self.core.getConfig(
             "globals", "pipeline_steps", configPath=self.core.prismIni, dft={}
@@ -1400,6 +1476,15 @@ class Prism_Kitsu_Functions(object):
             origin.tw_steps.insertRow(rows)
             prismStepItem = QTableWidgetItem(step)
             origin.tw_steps.setItem(rows, 0, prismStepItem)
+
+
+    def getKitsuStepFromPrismStep(self, step):
+        for prismStep, kitsuStep in self.core.getConfig(
+            "kitsu", "mapping", configPath=self.core.prismIni, dft={}
+        ).items():
+            if step == prismStep:
+                return kitsuStep
+        return None
 
 
     def getPrismStepFromKitsuStep(self, step):
