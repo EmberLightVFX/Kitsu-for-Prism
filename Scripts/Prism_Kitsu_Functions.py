@@ -1327,7 +1327,7 @@ class Prism_Kitsu_Functions(object):
                 splits.append("")
 
             asset_name = os.path.basename(assetPath)
-            asset_dict = GetAsset(self.project_dict, asset_name)
+            asset_dict = GetAssetByName(self.project_dict, asset_name)
             taskTypes = getTaskTypes(asset_dict)
             taskTypeNames = [x['name'] for x in taskTypes]
             allTaskTypes = getTaskTypes()
