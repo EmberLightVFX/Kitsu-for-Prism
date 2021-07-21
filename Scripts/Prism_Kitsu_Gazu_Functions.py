@@ -158,7 +158,7 @@ def GetAssets(proj_dict, asset_type, user=False, getCanceled=False):
     return assets
 
 
-def GetAsset(proj_dict, asset_name):
+def GetAssetByName(proj_dict, asset_name):
     asset_dict = gazu.asset.get_asset_by_name(proj_dict, asset_name)
     return asset_dict
 
