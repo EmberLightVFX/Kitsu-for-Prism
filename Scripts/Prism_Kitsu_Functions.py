@@ -208,6 +208,23 @@ class Prism_Kitsu_Functions(object):
         )
         lo_ksu2.addWidget(origin.b_checkLogin)
 
+        origin.stepMappingLayout = QVBoxLayout()
+        origin.l_stepMapping = QLabel("Prism and Kitsu Step Mappings")
+        origin.l_stepMapping.setMinimumHeight(30)
+        origin.stepMappingLayout.addWidget(origin.l_stepMapping)
+        origin.tw_steps = QTableWidget()
+        origin.tw_steps.setMinimumHeight(250)
+        origin.tw_steps.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        origin.tw_steps.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        origin.tw_steps.setColumnCount(2)
+        origin.tw_steps.horizontalHeader().setHighlightSections(False)
+        origin.tw_steps.horizontalHeader().setStretchLastSection(True)
+        origin.tw_steps.verticalHeader().setVisible(False)
+        origin.tw_steps.verticalHeader().setHighlightSections(False)
+        origin.tw_steps.setHorizontalHeaderLabels(["Prism Step", "Kitsu Step"])
+        origin.stepMappingLayout.addWidget(origin.tw_steps)
+        lo_ksu2.addLayout(origin.stepMappingLayout)
+
         origin.w_prjSettings.layout().insertWidget(5, origin.gb_ksuIntegration)
         origin.groupboxes.append(origin.gb_ksuIntegration)
 
@@ -259,6 +276,22 @@ class Prism_Kitsu_Functions(object):
                 origin.ignorePostSync.setChecked(
                     settings["kitsu"]["setfirstframeone"])
 
+            if "mapping" in settings["kitsu"]:
+                stepMapping = settings["kitsu"]["mapping"]
+                for prismMap in stepMapping:
+                    rows = origin.tw_steps.rowCount()
+                    origin.tw_steps.insertRow(rows)
+                    prismStepItem = QTableWidgetItem(prismMap)
+                    origin.tw_steps.setItem(rows, 0, prismStepItem)
+                    kitsuStepItem = QTableWidgetItem(stepMapping[prismMap])
+                    origin.tw_steps.setItem(rows, 1, kitsuStepItem)
+            else:
+                self.populateMappingTable(origin)
+
+        else:
+
+            self.populateMappingTable(origin)
+
         self.prismSettings_ksuToggled(origin,
                                       origin.gb_ksuIntegration.isChecked())
 
@@ -284,6 +317,14 @@ class Prism_Kitsu_Functions(object):
         settings["kitsu"]["usersync"] = origin.chb_syncUserTasks.isChecked()
         settings["kitsu"]["ignorepostchecks"] = origin.ignorePostSync.isChecked()
         settings["kitsu"]["setfirstframeone"] = origin.setFirstFrameOne.isChecked()
+
+        stepMapping = {}
+        rows = origin.tw_steps.rowCount()
+        for i in range(rows):
+            prismMap = origin.tw_steps.item(i, 0).text()
+            kitsuMap = origin.tw_steps.item(i, 1).text()
+            stepMapping[prismMap] = kitsuMap
+        settings["kitsu"]["mapping"] = stepMapping
 
     # Toggle visibility of toggle-objects
     @ err_catcher(name=__name__)
@@ -706,6 +747,14 @@ class Prism_Kitsu_Functions(object):
                 self.core.entities.createEntity("asset", assetPath)
                 createdAssets.append(assetData["name"])
 
+            # Create steps
+            tasks = GetTasksForAsset(assetData)
+            for task in tasks:
+                kitsuStep = task["task_type_name"]
+                prismStep = self.getPrismStepFromKitsuStep(kitsuStep)
+                self.core.entities.createStep(prismStep, "asset", assetPath, createCat=False)
+                self.core.entities.createCategory("asset", assetPath, prismStep, kitsuStep)
+
             # Process thumbnail
             tmbID, created, updated = DownloadThumbnail(self,
                                                         assetData["name"],
@@ -840,6 +889,7 @@ class Prism_Kitsu_Functions(object):
         updatedAssets = []
         # Create the asset
         createdAssets, updatedAssets = self.createAssets(assets)
+        self.createAssetTasks(assets)
 
         # Report what shots got added or updated
         ReportUpdateInfo(self, createdAssets, updatedAssets, "assets")
@@ -911,6 +961,14 @@ class Prism_Kitsu_Functions(object):
                 createdShots.append(shotName)
 
                 shotInfo["objID"] = shotData["id"]
+
+            # Create steps
+            tasks = GetTasksForShot(shotData)
+            for task in tasks:
+                kitsuStep = task["task_type_name"]
+                prismStep = self.getPrismStepFromKitsuStep(kitsuStep)
+                self.core.entities.createStep(prismStep, "shot", shotName, createCat=False)
+                self.core.entities.createCategory("shot", shotName, prismStep, kitsuStep)
 
             # As Kitsu allows you to write only one of the start frame and
             # end frame we need to check them induvidually
@@ -1091,6 +1149,7 @@ class Prism_Kitsu_Functions(object):
                 shot_names.append(shot_name)
 
         created_shots, updated_shots = self.createShots(shot_names)
+        self.createShotTasks(shot_names)
 
         # Report what shots got added or updated
         ReportUpdateInfo(self, created_shots, updated_shots, "shots")
@@ -1113,6 +1172,10 @@ class Prism_Kitsu_Functions(object):
                     # Create shot folders ##
                     shotName = shotData["sequence_name"] + \
                         "-" + shotData["name"]
+
+                    # Add episode name if exists
+                    if "episode_name" in shotData:
+                        shotName = shotData["episode_name"] + "." + shotName
 
                     localID = getID(self, shotName, "Shotinfo")
                     if localID is None:
@@ -1245,6 +1308,42 @@ class Prism_Kitsu_Functions(object):
         return created_assets, updated_assets
 
     @ err_catcher(name=__name__)
+    def createAssetTasks(self, assets):
+        connected = self.connectToKitsu()
+        if connected is False:
+            return
+
+        for asset_location in assets:
+            # Remove pre-folder path and remove first character
+            # before os.sep split and remove last object as it's
+            # the name of the asset
+            aBasePath = self.core.getAssetPath()
+            assetPath = asset_location.replace(aBasePath, "")
+
+            splits = assetPath[1:].split(os.sep)[:-1]
+
+            # If not in any subfolder, assign to the empty asset-type
+            if len(splits) == 0:
+                splits.append("")
+
+            asset_name = os.path.basename(assetPath)
+            asset_dict = GetAssetByName(self.project_dict, asset_name)
+            taskTypes = getTaskTypes(asset_dict)
+            taskTypeNames = [x['name'] for x in taskTypes]
+            allTaskTypes = getTaskTypes()
+
+            scenepath = self.core.getEntityPath(entity="step", asset=assetPath)
+            for root, folders, files in os.walk(scenepath):
+                for step in folders:
+                    kitsuStep = self.getKitsuStepFromPrismStep(step)
+                    if kitsuStep not in taskTypeNames:
+                        task_type = next((x for x in allTaskTypes if x['name'] == kitsuStep), None)
+                        createKitsuTask(asset_dict, task_type)
+                break
+
+        return
+
+    @ err_catcher(name=__name__)
     def createShots(self, shots):
         connected = self.connectToKitsu()
         if connected is False:
@@ -1333,3 +1432,65 @@ class Prism_Kitsu_Functions(object):
         self.publish_type_dict = None
 
         return created_shots, updated_shots
+
+
+    @ err_catcher(name=__name__)
+    def createShotTasks(self, shots):
+        connected = self.connectToKitsu()
+        if connected is False:
+            return
+
+        for shot_name in shots:
+            # Split names
+            shotName, seqName = self.core.entities.splitShotname(shot_name)
+            if self.project_dict["production_type"] == "tvshow":
+                seqPart = seqName
+                epName, seqName = seqName.split(".", 1)
+            else:
+                seqPart = seqName
+                epName = None
+
+            episode_dict = GetEpisodeByName(self.project_dict, epName) if epName else None
+            sequence_dict = GetSequenceByName(self.project_dict, seqName, episode_dict)
+            shot_dict = GetShotByName(sequence_dict, shotName)
+            taskTypes = getTaskTypes(shot_dict)
+            taskTypeNames = [x['name'] for x in taskTypes]
+            allTaskTypes = getTaskTypes()
+
+            scenepath = self.core.getEntityPath(entity="step", shot=shotName, sequence=seqPart)
+            for root, folders, files in os.walk(scenepath):
+                for step in folders:
+                    kitsuStep = self.getKitsuStepFromPrismStep(step)
+                    if kitsuStep not in taskTypeNames:
+                        task_type = next((x for x in allTaskTypes if x['name'] == kitsuStep), None)
+                        createKitsuTask(shot_dict, task_type)
+                break
+        return
+
+
+    def populateMappingTable(self, origin):
+        for step in self.core.getConfig(
+            "globals", "pipeline_steps", configPath=self.core.prismIni, dft={}
+        ):
+            rows = origin.tw_steps.rowCount()
+            origin.tw_steps.insertRow(rows)
+            prismStepItem = QTableWidgetItem(step)
+            origin.tw_steps.setItem(rows, 0, prismStepItem)
+
+
+    def getKitsuStepFromPrismStep(self, step):
+        for prismStep, kitsuStep in self.core.getConfig(
+            "kitsu", "mapping", configPath=self.core.prismIni, dft={}
+        ).items():
+            if step == prismStep:
+                return kitsuStep
+        return None
+
+
+    def getPrismStepFromKitsuStep(self, step):
+        for prismStep, kitsuStep in self.core.getConfig(
+            "kitsu", "mapping", configPath=self.core.prismIni, dft={}
+        ).items():
+            if step == kitsuStep:
+                return prismStep
+        return None
