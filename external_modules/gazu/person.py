@@ -73,7 +73,7 @@ def get_person_by_full_name(full_name, client=default):
         dict: Person corresponding to given name.
     """
     if " " in full_name:
-        first_name, last_name = full_name.lower().split(" ")
+        first_name, last_name = full_name.lower().split(" ",1)
     else:
         first_name, last_name = full_name.lower().strip(), ""
     for person in all_persons():
